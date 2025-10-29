@@ -276,6 +276,9 @@ class CarpoolAPI:
                 _LOGGER.error("Error processing leg: %s", err)
                 continue
 
+        # Sort legs by time to ensure earliest time appears first
+        processed_legs.sort(key=lambda x: x["time"])
+
         return {
             "date": event_date.strftime("%Y-%m-%d"),
             "day_name": event_date.strftime("%A"),
