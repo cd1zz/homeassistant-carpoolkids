@@ -1,0 +1,11 @@
+{
+  "domain": "carpool_kids",
+  "name": "Carpool Kids",
+  "codeowners": [],
+  "config_flow": true,
+  "documentation": "https://github.com/cd1zz/homeassistant-playmetrics",
+  "integration_type": "service",
+  "iot_class": "cloud_polling",
+  "requirements": [],
+  "version": "1.0.0"
+}

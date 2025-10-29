@@ -1,0 +1,22 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Set up Carpool Kids",
+        "description": "Enter your Carpool Kids account information",
+        "data": {
+          "email": "Email",
+          "android_id": "Android ID (optional)",
+          "token": "Token (optional)"
+        }
+      }
+    },
+    "error": {
+      "invalid_email": "Invalid email address",
+      "unknown": "Unexpected error occurred"
+    },
+    "abort": {
+      "already_configured": "This account is already configured"
+    }
+  }
+}
