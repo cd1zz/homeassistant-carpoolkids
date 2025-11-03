@@ -24,8 +24,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     # Create API client
     api = CarpoolAPI(
         email=entry.data["email"],
-        android_id=entry.data.get("android_id"),
-        token=entry.data.get("token"),
+        android_id=entry.data["android_id"],
+        token=entry.data["token"],
         timezone=hass.config.time_zone,
     )
 

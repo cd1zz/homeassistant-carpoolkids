@@ -39,11 +39,28 @@ This is a custom Home Assistant integration for monitoring Carpool Kids schedule
 4. Search for "Carpool Kids" and select it
 
 5. Enter your configuration:
-   - **Email**: Your Carpool Kids account email (required)
-   - **Android ID**: Optional (uses default if not provided)
-   - **Token**: Optional (uses default if not provided)
+   - **Email**: Your Carpool Kids account email
+   - **Android ID**: Your device's Android ID (see below for how to obtain)
+   - **Token**: Your Google authentication token (see below for how to obtain)
 
 6. Click Submit
+
+### Obtaining Credentials
+
+To use this integration, you need to obtain your Android ID and authentication token:
+
+#### Android ID
+1. Install [Device ID](https://play.google.com/store/apps/details?id=com.evozi.deviceid) on your Android device
+2. Open the app and copy the "Android ID" value
+3. Use this value in the integration setup
+
+#### Authentication Token
+1. Install [TokenForGApps](https://github.com/simonpham/token-for-gapps) or similar token extraction tool
+2. Request a token for the email account linked to Carpool Kids
+3. Copy the "Token" value (starts with "aas_et/")
+4. Use this value in the integration setup
+
+**Note**: These credentials are stored securely in your Home Assistant configuration and are only used to authenticate with the Carpool Kids API.
 
 ## Sensors
 
@@ -138,9 +155,10 @@ The custom component version has several improvements over the AppDaemon script:
 
 ### Authentication Failures
 
-- Verify your email address is correct
+- Verify your email address, Android ID, and token are correct
 - Check Home Assistant logs for specific error messages
-- The default token may need to be updated if the API changes
+- Your token may expire and need to be regenerated periodically
+- Ensure you're using the correct token format (should start with "aas_et/")
 
 ### No Events Showing
 

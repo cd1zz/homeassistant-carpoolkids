@@ -16,8 +16,6 @@ from .const import (
     CONF_EMAIL,
     CONF_ANDROID_ID,
     CONF_TOKEN,
-    DEFAULT_ANDROID_ID,
-    DEFAULT_TOKEN,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -25,8 +23,8 @@ _LOGGER = logging.getLogger(__name__)
 STEP_USER_DATA_SCHEMA = vol.Schema(
     {
         vol.Required(CONF_EMAIL): str,
-        vol.Optional(CONF_ANDROID_ID, default=DEFAULT_ANDROID_ID): str,
-        vol.Optional(CONF_TOKEN, default=DEFAULT_TOKEN): str,
+        vol.Required(CONF_ANDROID_ID): str,
+        vol.Required(CONF_TOKEN): str,
     }
 )
 

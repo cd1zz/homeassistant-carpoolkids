@@ -12,8 +12,6 @@ from .const import (
     AUTH_URL,
     CARPOOL_AUTH_URL,
     EVENTS_URL,
-    DEFAULT_ANDROID_ID,
-    DEFAULT_TOKEN,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -25,14 +23,14 @@ class CarpoolAPI:
     def __init__(
         self,
         email: str,
-        android_id: str | None = None,
-        token: str | None = None,
+        android_id: str,
+        token: str,
         timezone: str | None = None,
     ) -> None:
         """Initialize the API client."""
         self.email = email
-        self.android_id = android_id or DEFAULT_ANDROID_ID
-        self.token = token or DEFAULT_TOKEN
+        self.android_id = android_id
+        self.token = token
         self.timezone = ZoneInfo(timezone) if timezone else ZoneInfo("UTC")
         self._setup_auth_config()
         self.data: dict[str, Any] = {}
