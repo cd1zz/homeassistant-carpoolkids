@@ -4,6 +4,7 @@ from __future__ import annotations
 import logging
 from datetime import datetime, timezone, timedelta
 from typing import Any
+from zoneinfo import ZoneInfo
 
 import requests
 
@@ -13,7 +14,6 @@ from .const import (
     EVENTS_URL,
     DEFAULT_ANDROID_ID,
     DEFAULT_TOKEN,
-    TIMEZONE_OFFSET,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -27,11 +27,13 @@ class CarpoolAPI:
         email: str,
         android_id: str | None = None,
         token: str | None = None,
+        timezone: str | None = None,
     ) -> None:
         """Initialize the API client."""
         self.email = email
         self.android_id = android_id or DEFAULT_ANDROID_ID
         self.token = token or DEFAULT_TOKEN
+        self.timezone = ZoneInfo(timezone) if timezone else ZoneInfo("UTC")
         self._setup_auth_config()
         self.data: dict[str, Any] = {}
 
@@ -228,7 +230,7 @@ class CarpoolAPI:
         event_date = datetime.fromisoformat(
             event["dateTime"].replace("Z", "").replace(".000", "")
         )
-        mountain_tz = timezone(timedelta(hours=TIMEZONE_OFFSET))
+        local_tz = self.timezone
 
         processed_legs = []
         carpool_drivers = event.get("carpool", {}).get("drivers", [])
@@ -238,7 +240,7 @@ class CarpoolAPI:
                 leg_time_utc = datetime.fromisoformat(
                     leg["dateTime"].replace("Z", "").replace(".000", "")
                 ).replace(tzinfo=timezone.utc)
-                leg_time_mt = leg_time_utc.astimezone(mountain_tz)
+                leg_time_local = leg_time_utc.astimezone(local_tz)
 
                 # Get driver info
                 driver = leg.get("driver", {})
@@ -264,8 +266,8 @@ class CarpoolAPI:
 
                 processed_legs.append(
                     {
-                        "time": leg_time_mt.strftime("%H:%M"),
-                        "time_formatted": leg_time_mt.strftime("%I:%M %p"),
+                        "time": leg_time_local.strftime("%H:%M"),
+                        "time_formatted": leg_time_local.strftime("%I:%M %p"),
                         "driver_name": driver_name,
                         "driver_seats": driver.get("seatCount", 0),
                         "riders": riders,

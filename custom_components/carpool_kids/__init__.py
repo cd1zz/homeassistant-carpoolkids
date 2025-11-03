@@ -26,6 +26,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         email=entry.data["email"],
         android_id=entry.data.get("android_id"),
         token=entry.data.get("token"),
+        timezone=hass.config.time_zone,
     )
 
     # Create data update coordinator

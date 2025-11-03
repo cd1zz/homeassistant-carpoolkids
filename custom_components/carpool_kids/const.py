@@ -22,6 +22,3 @@ SENSOR_TODAY = "today"
 SENSOR_UPCOMING = "upcoming"
 SENSOR_NEXT_EVENT = "next_event"
 SENSOR_STATUS = "status"
-
-# Timezone
-TIMEZONE_OFFSET = -6  # MDT is UTC-6
