@@ -8,7 +8,7 @@ CONF_ANDROID_ID = "android_id"
 CONF_TOKEN = "token"
 
 # Default values
-DEFAULT_UPDATE_INTERVAL = 3600  # 1 hour
+DEFAULT_UPDATE_INTERVAL = 900  # 15 minutes, so same-day driver assignments show up quickly
 
 # API URLs
 AUTH_URL = "https://android.googleapis.com/auth"

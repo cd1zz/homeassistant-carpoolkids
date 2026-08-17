@@ -241,7 +241,7 @@ class CarpoolAPI:
                 leg_time_local = leg_time_utc.astimezone(local_tz)
 
                 # Get driver info
-                driver = leg.get("driver", {})
+                driver = leg.get("driver") or {}
                 if not driver:
                     driver_id = leg.get("driverId")
                     if driver_id:
@@ -250,9 +250,12 @@ class CarpoolAPI:
                             {},
                         )
 
-                driver_name = (
-                    f"{driver.get('firstName', 'Unknown')} {driver.get('lastName', '')}"
-                )
+                if driver:
+                    # API names can carry stray whitespace (e.g. "Elina ")
+                    driver_name = self._format_name(driver)
+                else:
+                    # No driver key at all means nobody has claimed the leg yet
+                    driver_name = "Unassigned"
 
                 riders = []
                 for rider in leg.get("riders", []):
@@ -287,11 +290,18 @@ class CarpoolAPI:
             "total_legs": len(processed_legs),
         }
 
+    @staticmethod
+    def _format_name(person: dict[str, Any]) -> str:
+        """Build a full name, stripping stray whitespace from API fields."""
+        first = (person.get("firstName") or "").strip()
+        last = (person.get("lastName") or "").strip()
+        return f"{first} {last}".strip() or "Unknown"
+
     def _find_parent_name(self, parent_id: str, drivers: list[dict[str, Any]]) -> str:
         """Find parent name from driver list."""
         for driver in drivers:
             if driver.get("id") == parent_id:
-                return f"{driver.get('firstName', 'Unknown')} {driver.get('lastName', '')}"
+                return self._format_name(driver)
         return "Unknown"
 
     def update(self) -> dict[str, Any]:
