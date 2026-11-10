@@ -6,6 +6,7 @@
   "documentation": "https://github.com/cd1zz/homeassistant-carpoolkids",
   "integration_type": "service",
   "iot_class": "cloud_polling",
+  "issue_tracker": "https://github.com/cd1zz/homeassistant-carpoolkids/issues",
   "requirements": [],
   "version": "1.2.1"
 }
