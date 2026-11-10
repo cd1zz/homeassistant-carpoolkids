@@ -177,6 +177,7 @@ class CarpoolAPI:
                 "upcoming": [],
                 "next_event": None,
                 "all_events": [],
+                "event_list": [],
             }
 
         # Sort events by date
@@ -189,18 +190,18 @@ class CarpoolAPI:
                 "upcoming": [],
                 "next_event": None,
                 "all_events": [],
+                "event_list": [],
             }
 
-        today = datetime.now().date()
+        # Bucket by the Home Assistant local date, not the UTC date
+        today = datetime.now(self.timezone).date()
         today_events = []
         upcoming_events = []
 
         for event in sorted_events:
             try:
                 processed_event = self._process_single_event(event)
-                event_date = datetime.fromisoformat(
-                    event["dateTime"].replace("Z", "").replace(".000", "")
-                ).date()
+                event_date = self._event_local_date(event)
 
                 if event_date == today:
                     today_events.append(processed_event)
@@ -220,14 +221,44 @@ class CarpoolAPI:
             "today": today_events,
             "upcoming": upcoming_events[:10],  # Limit to 10 upcoming events
             "next_event": next_event,
-            "all_events": sorted_events[:5],  # Keep raw data for individual sensors
+            "all_events": sorted_events[:5],  # Raw data (status sensor count)
+            # Processed (local time) data for the numbered event sensors
+            "event_list": (today_events + upcoming_events)[:5],
         }
+
+    @staticmethod
+    def _parse_utc(value: str) -> datetime:
+        """Parse an API timestamp ("...Z", UTC) into an aware datetime."""
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+        if parsed.tzinfo is None:
+            parsed = parsed.replace(tzinfo=timezone.utc)
+        return parsed
+
+    def _event_local_date(self, event: dict[str, Any]):
+        """Return the local calendar date an event falls on.
+
+        The date comes from the earliest leg converted to local time, so an
+        evening leg (already "tomorrow" in UTC) stays on the right day. With
+        no legs, fall back to the event timestamp; a midnight-UTC value is a
+        date-only marker and is used as-is rather than shifted a day back.
+        """
+        leg_times = []
+        for leg in event.get("eventLegs", []):
+            try:
+                leg_times.append(self._parse_utc(leg["dateTime"]))
+            except (KeyError, TypeError, ValueError, AttributeError):
+                continue
+        if leg_times:
+            return min(leg_times).astimezone(self.timezone).date()
+
+        event_dt = self._parse_utc(event["dateTime"])
+        if event_dt.time() == datetime.min.time():
+            return event_dt.date()
+        return event_dt.astimezone(self.timezone).date()
 
     def _process_single_event(self, event: dict[str, Any]) -> dict[str, Any]:
         """Process a single event and return formatted data."""
-        event_date = datetime.fromisoformat(
-            event["dateTime"].replace("Z", "").replace(".000", "")
-        )
+        event_date = self._event_local_date(event)
         local_tz = self.timezone
 
         processed_legs = []
@@ -235,10 +266,7 @@ class CarpoolAPI:
 
         for leg in event.get("eventLegs", []):
             try:
-                leg_time_utc = datetime.fromisoformat(
-                    leg["dateTime"].replace("Z", "").replace(".000", "")
-                ).replace(tzinfo=timezone.utc)
-                leg_time_local = leg_time_utc.astimezone(local_tz)
+                leg_time_local = self._parse_utc(leg["dateTime"]).astimezone(local_tz)
 
                 # Get driver info
                 driver = leg.get("driver") or {}
