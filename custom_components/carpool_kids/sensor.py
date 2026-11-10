@@ -175,6 +175,11 @@ class CarpoolStatusSensor(CarpoolSensorBase):
         self._attr_icon = "mdi:check-circle"
 
     @property
+    def available(self) -> bool:
+        """Stay available so the "error" state is actually visible."""
+        return True
+
+    @property
     def native_value(self) -> str:
         """Return the state of the sensor."""
         return "online" if self.coordinator.last_update_success else "error"
@@ -182,7 +187,7 @@ class CarpoolStatusSensor(CarpoolSensorBase):
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
         """Return the state attributes."""
-        all_events = self.coordinator.data.get("all_events", [])
+        all_events = (self.coordinator.data or {}).get("all_events", [])
         attrs = {
             "last_update": datetime.now().isoformat(),
             "total_events": len(all_events),
@@ -209,56 +214,40 @@ class CarpoolEventSensor(CarpoolSensorBase):
         self._attr_name = f"Carpool Event {event_index + 1}"
         self._attr_icon = "mdi:car"
 
+    def _event(self) -> dict[str, Any] | None:
+        """Return this sensor's processed (local time) event, if any."""
+        events = (self.coordinator.data or {}).get("event_list", [])
+        if len(events) <= self.event_index:
+            return None
+        return events[self.event_index]
+
     @property
     def available(self) -> bool:
         """Return if entity is available."""
         if not self.coordinator.last_update_success:
             return False
-        all_events = self.coordinator.data.get("all_events", [])
-        return len(all_events) > self.event_index
+        return self._event() is not None
 
     @property
-    def native_value(self) -> str:
-        """Return the state of the sensor."""
-        all_events = self.coordinator.data.get("all_events", [])
-        if len(all_events) <= self.event_index:
-            return "unavailable"
-
-        event_data = all_events[self.event_index]
-        try:
-            event_date = datetime.fromisoformat(
-                event_data["dateTime"].replace("Z", "").replace(".000", "")
-            )
-            legs = event_data.get("eventLegs", [])
-            if legs:
-                leg_time = datetime.fromisoformat(
-                    legs[0]["dateTime"].replace("Z", "").replace(".000", "")
-                )
-                return f"{event_date.strftime('%Y-%m-%d')} {leg_time.strftime('%I:%M %p')}"
-            return event_date.strftime("%Y-%m-%d")
-        except Exception as err:
-            _LOGGER.error("Error parsing event data: %s", err)
-            return "error"
+    def native_value(self) -> str | None:
+        """Return the state of the sensor (local date and first leg time)."""
+        event = self._event()
+        if event is None:
+            return None
+        legs = event.get("legs", [])
+        if legs:
+            return f"{event['date']} {legs[0]['time_formatted']}"
+        return event["date"]
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
         """Return the state attributes."""
-        all_events = self.coordinator.data.get("all_events", [])
-        if len(all_events) <= self.event_index:
+        event = self._event()
+        if event is None:
             return {}
-
-        event_data = all_events[self.event_index]
-        try:
-            event_date = datetime.fromisoformat(
-                event_data["dateTime"].replace("Z", "").replace(".000", "")
-            )
-
-            return {
-                "date": event_date.strftime("%Y-%m-%d"),
-                "day": event_date.strftime("%A"),
-                "location": event_data.get("location", "Unknown"),
-                "total_legs": len(event_data.get("eventLegs", [])),
-            }
-        except Exception as err:
-            _LOGGER.error("Error parsing event attributes: %s", err)
-            return {}
+        return {
+            "date": event["date"],
+            "day": event["day_name"],
+            "location": event["location"],
+            "total_legs": event["total_legs"],
+        }
